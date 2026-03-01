@@ -5,15 +5,27 @@ import random
 import os
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS untuk SEMUA origin (CodePen, localhost, dll)
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 @app.route('/')
 def home():
     return "Warung Komedi API is running!"
 
-@app.route('/generate', methods=['POST'])
+@app.route('/generate', methods=['POST', 'OPTIONS'])
 def generate():
-    data = request.json
+    # Handle preflight OPTIONS
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    data = request.json or {}
     tema = data.get('tema', 'general')
     season = data.get('season', '1')
     
@@ -50,7 +62,11 @@ def generate():
         'success': True,
         'script': {
             'script_id': script_id,
-            'metadata': {'tema': tema, 'season': season, 'created': datetime.now().isoformat()},
+            'metadata': {
+                'tema': tema,
+                'season': season,
+                'created': datetime.now().isoformat()
+            },
             'dialogue': dialogues
         }
     })
